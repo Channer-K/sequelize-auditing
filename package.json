@@ -1,0 +1,28 @@
+{
+  "name": "sequelize-auditing",
+  "version": "0.1.0",
+  "description": "A plugin for sequelize to store data changed into another table",
+  "main": "./lib/",
+  "scripts": {},
+  "keywords": [
+    "sequelize",
+    "sequelize-plugin",
+    "auditing"
+  ],
+  "author": "Channer",
+  "license": [
+    {
+      "type": "MIT",
+      "url": ""
+    }
+  ],
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^2.4.5",
+    "mysql": "^2.10.2",
+    "sequelize": "^3.19.3"
+  },
+  "dependencies": {
+    "lodash": "^4.5.1"
+  }
+}
