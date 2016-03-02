@@ -20,16 +20,16 @@ A plugin for sequelize to store data changed into another table.
 
     // #1
     var User = sequelize.define('user', {
-      username: DataTypes.STRING,
-      description: DataTypes.TEXT
+      username: Sequelize.STRING,
+      description: Sequelize.TEXT
     }, {
       auditable: true,
     });
 
     // or you can
     var User = sequelize.define('user', {
-      username: DataTypes.STRING,
-      description: DataTypes.TEXT
+      username: Sequelize.STRING,
+      description: Sequelize.TEXT
     });
 
     User.makeAuditable();
@@ -41,7 +41,7 @@ You can pass an optional options object to `makeAuditable` function.
 | Name | Type | Description |
 | ------------ | ------------- | ------------ |
 | [options.tableSuffix] | String  | The suffix of new audit table. Defaults to '_history' |
-| [options.excludeFields] | Array  | The fields not to c in audit table. Defaults to 'id', 'updatedAt' and 'createdAt' |
+| [options.excludeFields] | Array  | The fields are not added to audit table. Defaults to 'id', 'updatedAt' and 'createdAt' |
 
 ## How to work
 
