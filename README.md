@@ -80,7 +80,7 @@ You can pass an optional options object to `makeAuditable` function.
 
 ## Usage
 
-### Instance#getHistories([options]) -> Promise.<Array.<Instance>>
+### Instance#getHistories([options]) -> `Promise.<Array.<Instance>>`
 
     User.findById(1).then(function(user){
       var histories = user.getHistories();
