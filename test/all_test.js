@@ -8,39 +8,48 @@
 'use strict';
 
 var _ = require('lodash');
-var Utils = require('./test_utils');
-var Sequelize = Utils.Sequelize;
+var config = require('./config');
+var Sequelize = require('sequelize');
+require('../lib/index')(Sequelize);
+
+// Make sure errors get thrown when testing
+Sequelize.Promise.onPossiblyUnhandledRejection(function(e, promise) {
+  throw e;
+});
+Sequelize.Promise.longStackTraces();
+
 
 var chai = require('chai');
 var assert = chai.assert;
 var expect = chai.expect;
 
+var sequelize;
 var sequelizeVersion = require('sequelize/package.json').version;
 
 console.log('Sequelize version:', sequelizeVersion);
 
-
 describe('Sequelize-auditing Tests', function () {
-  afterEach(function() {
-    this.models = Utils.sequelize.models;
+  before(function() {
+    sequelize = new Sequelize(config.database, config.username, config.password, config);
+  });
 
-    var removeModel = Utils.sequelize.modelManager.removeModel
-                      .bind(Utils.sequelize.modelManager);
+  afterEach(function(done) {
+    sequelize.getQueryInterface().dropAllTables()
+    .then(function() {
+      sequelize.modelManager.daos = [];
+      sequelize.models = {};
 
-    _.forIn(this.models, function(model) {
-      removeModel(model);
-    }.bind(this));
+      return sequelize.getQueryInterface().dropAllEnums();
+    }).then(done, done);
   });
 
   describe('Model#define()', function() {
 
     describe('options.auditable', function() {
       it('create table by using options.auditable in model define', function() {
-        var userModel = Utils.sequelize.define('user', {
+        var userModel = sequelize.define('user', {
           username: Sequelize.STRING
         }, {auditable: true});
-
-        userModel.sync({force: true});
 
         expect(userModel.auditModel).to.be.ok;
       });
@@ -48,9 +57,8 @@ describe('Sequelize-auditing Tests', function () {
 
     describe('#makeAuditable()', function() {
       it('create table by using makeAuditable function', function() {
-        var userModel = Utils.sequelize.define('user', {username: Sequelize.STRING});
+        var userModel = sequelize.define('user', {username: Sequelize.STRING});
         userModel.makeAuditable();
-        userModel.sync({force: true});
 
         expect(userModel.auditModel).to.be.ok;
       });
@@ -61,41 +69,50 @@ describe('Sequelize-auditing Tests', function () {
   describe('Data operation', function() {
     var userModel;
 
-    before(function() {
-      userModel = Utils.sequelize.define('user', {
+    beforeEach(function(done) {
+      userModel = sequelize.define('user', {
         username: Sequelize.STRING,
         flag: { type: Sequelize.BOOLEAN, defaultValue: true}
       }, {auditable: true});
-      userModel.sync({force: true});
-      userModel.bulkCreate([{username: 'test1'}, {username: 'test2'}]);
+
+      userModel.sync({force: true}).then(function() {
+        return userModel.auditModel.sync({force: true});
+      }).then(function() {
+        return userModel.bulkCreate([{username: 'test1'}, {username: 'test2'}]);
+      }).then(function() {
+        done();
+      });
     });
 
     describe('update', function() {
-      it('should insert one changed history into audit table', function() {
+      it('should insert one changed history into audit table', function(done) {
+        var userIns;
         userModel.findOne({where: {username: 'test1'}})
         .then(function(user) {
-          user.update({username: 'changed'});
-
-          expect(user.username).to.equal('changed');
-
-          return userModel.auditModel.count({
+          userIns = user;
+          return user.update({username: 'changed'});
+        }).then(function() {
+          expect(userIns.username).to.equal('changed');
+        }).then(function() {
+          return userModel.auditModel.findAll({
             where: {
               username: 'test1',
-              recordId: user.id,
+              recordId: userIns.id,
               action: 'updated'
             }
           });
-        }).then(function(affectedRows) {
-          expect(affectedRows).to.equal(1);
+        }).then(function(histories) {
+          expect(histories).to.have.lengthOf(1);
+          done();
         });
       });
     });
 
     describe('bulkUpdate', function() {
-      it('should insert bulk changed histories into audit table', function() {
+      it('should insert bulk changed histories into audit table', function(done) {
         userModel.update({username: 'bulk_changed'}, {where: {flag: true}})
         .then(function(affectedRows) {
-          expect(affectedRows).to.equal(2);
+          expect(affectedRows[0]).to.equal(2);
 
           return userModel.auditModel.count({
             where: {username: 'test1', action: 'updated'}
@@ -106,12 +123,14 @@ describe('Sequelize-auditing Tests', function () {
           return userModel.auditModel.count({
             where: {username: 'test2', action: 'updated'}
           });
-        });
+        }).then(function(num) {
+          expect(num).to.equal(1);
+        }).then(done, done);
       });
     });
 
     describe('destroy', function() {
-      it('should insert deleted history into audit table', function() {
+      it('should insert deleted history into audit table', function(done) {
         userModel.destroy({where: {username: 'test1'}})
         .then(function(affectedRows) {
           expect(affectedRows).to.equal(1);
@@ -121,12 +140,12 @@ describe('Sequelize-auditing Tests', function () {
           });
         }).then(function(affectedRows) {
           expect(affectedRows).to.equal(1);
-        });
+        }).then(done, done);
       });
     });
 
     describe('bulkDestroy', function() {
-      it('should insert bulk deleted histories into audit table', function() {
+      it('should insert bulk deleted histories into audit table', function(done) {
         userModel.destroy({where: {flag: true}})
         .then(function(affectedRows) {
           expect(affectedRows).to.equal(2);
@@ -142,26 +161,30 @@ describe('Sequelize-auditing Tests', function () {
           });
         }).then(function(affectedRows) {
           expect(affectedRows).to.equal(1);
-        });
+        }).then(done, done);
       });
     });
 
     describe('Instance#getHistories()', function() {
-      it('should get all histories', function() {
+      it('should get all histories', function(done) {
         var userIns;
+        var recordsArr;
         userModel.findOne({where: {username: 'test1'}})
         .then(function(user) {
           userIns = user;
 
-          user.update({username: 'first_change'});
-          user.update({username: 'second_change'});
-
+          return user.update({username: 'first_change'});
+        }).then(function() {
+          return userIns.update({username: 'second_change'});
+        }).then(function() {
           return userModel.auditModel.findAll({where: {recordId: userIns.id}})
         }).then(function(records) {
-          userIns.getHistories().then(function(histories) {
-            expect(records.length).to.equal(histories.length);
-          })
-        })
+          recordsArr = records;
+          return userIns.getHistories();
+        }).then(function(histories) {
+          expect(recordsArr.length).to.equal(histories.length);
+          done();
+        });
       });
     });
   });

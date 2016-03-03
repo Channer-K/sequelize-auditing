@@ -5,7 +5,7 @@
   "main": "./lib/",
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha --check-leaks --colors -t 10000 --reporter \"spec\"",
-    "cover": "./node_modules/.bin/istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec test/all_test.js"
+    "cover": "./node_modules/.bin/istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec test/all_test.js"
   },
   "keywords": [
     "sequelize",

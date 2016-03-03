@@ -92,7 +92,7 @@ You can work with this object in the same way that you work with the default Seq
 
 ## Test
 
-Use `npm test` to run the tests. Use `npm cover` to check coverage.
+Use `npm test` to run the tests. Use `npm run cover` to check coverage.
 
 Requires a database called `sequelize_auditing_test` without password yet.
 
