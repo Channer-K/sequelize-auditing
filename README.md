@@ -41,7 +41,7 @@ You can pass an optional options object to `makeAuditable` function.
 | Name | Type | Description |
 | ------------ | ------------- | ------------ |
 | [options.tableSuffix] | String  | The suffix of new audit table. Defaults to '_history' |
-| [options.excludeFields] | Array  | The fields are not added to audit table. Defaults to 'id', 'updatedAt' and 'createdAt' |
+| [options.excludeFields] | Array  | The fields are in original table but not in audit table. Defaults to 'id', 'updatedAt' and 'createdAt' |
 
 ## How to work
 
@@ -88,7 +88,7 @@ You can pass an optional options object to `makeAuditable` function.
 
 ### Model.auditModel
 
-To get audit model from original model so that you can do anything you want just like a normal Sequelize#Model
+You can work with this object in the same way that you work with the default Sequelize#Model.
 
 ## License
 
