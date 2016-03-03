@@ -90,6 +90,12 @@ You can pass an optional options object to `makeAuditable` function.
 
 You can work with this object in the same way that you work with the default Sequelize#Model.
 
+## Test
+
+Use `npm test` to run the tests. Use `npm cover` to check coverage.
+
+Requires a database called `sequelize_auditing_test` without password yet.
+
 ## License
 
 [LICENSE](LICENSE)

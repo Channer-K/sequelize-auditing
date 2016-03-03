@@ -18,9 +18,9 @@ require('../lib/index')(Sequelize);
 // database connection info
 var db = {
   username: "root",
-  password: "123456",
+  password: "",
   database: "sequelize_auditing_test",
-  host: "192.168.8.218",
+  host: "127.0.0.1",
   dialect: "mysql",
   logging: false,
   pool: {
