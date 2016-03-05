@@ -86,18 +86,17 @@ describe('Sequelize-auditing Tests', function () {
 
     describe('update', function() {
       it('should insert one changed history into audit table', function(done) {
-        var userIns;
-        userModel.findOne({where: {username: 'test1'}})
+        userModel.findOne({where: {username: 'test1'}}).bind({})
         .then(function(user) {
-          userIns = user;
+          this.user = user;
           return user.update({username: 'changed'});
         }).then(function() {
-          expect(userIns.username).to.equal('changed');
+          expect(this.user.username).to.equal('changed');
         }).then(function() {
           return userModel.auditModel.findAll({
             where: {
               username: 'test1',
-              recordId: userIns.id,
+              recordId: this.user.id,
               action: 'updated'
             }
           });
@@ -167,22 +166,20 @@ describe('Sequelize-auditing Tests', function () {
 
     describe('Instance#getHistories()', function() {
       it('should get all histories', function(done) {
-        var userIns;
-        var recordsArr;
-        userModel.findOne({where: {username: 'test1'}})
+        userModel.findOne({where: {username: 'test1'}}).bind({})
         .then(function(user) {
-          userIns = user;
+          this.user = user;
 
           return user.update({username: 'first_change'});
         }).then(function() {
-          return userIns.update({username: 'second_change'});
+          return this.user.update({username: 'second_change'});
         }).then(function() {
-          return userModel.auditModel.findAll({where: {recordId: userIns.id}})
+          return userModel.auditModel.findAll({where: {recordId: this.user.id}})
         }).then(function(records) {
-          recordsArr = records;
-          return userIns.getHistories();
+          this.records = records;
+          return this.user.getHistories();
         }).then(function(histories) {
-          expect(recordsArr.length).to.equal(histories.length);
+          expect(this.records.length).to.equal(histories.length);
           done();
         });
       });
